@@ -1,0 +1,70 @@
+FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+
+# Configure ROS One apt repository
+RUN apt update -q -qq && apt install -y -q -qq curl lsb-release && apt clean && rm -rf /var/lib/apt/lists/
+RUN curl -sSL https://ros.packages.techfak.net/gpg.key -o /etc/apt/keyrings/ros-one-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-one-keyring.gpg] https://ros.packages.techfak.net $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros1.list
+RUN echo "# deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/ros-one-keyring.gpg] https://ros.packages.techfak.net $(lsb_release -cs) main-dbg" | tee -a /etc/apt/sources.list.d/ros1.list
+
+# Install and setup rosdep
+# Do not install python3-rosdep2, which is an outdated version of rosdep shipped via the Ubuntu repositories (instead of ROS)!
+RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq python3-rosdep && apt clean && rm -rf /var/lib/apt/lists/
+RUN rosdep init
+
+# Define custom rosdep package mapping
+RUN echo "yaml https://ros.packages.techfak.net/ros-one.yaml ubuntu" | tee /etc/ros/rosdep/sources.list.d/1-ros-one.list
+RUN rosdep update
+
+# Install packages, e.g. ROS desktop
+RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq ros-one-desktop && apt clean && rm -rf /var/lib/apt/lists/
+ENV ROS_DISTRO="one"
+
+# install pip
+RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -q -qq -y python3-pip && apt clean && rm -rf /var/lib/apt/lists/ 
+RUN pip install numpy==1.26.4 scipy==1.15.1
+# install pytorch via pip
+RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+
+# install genesis
+RUN apt update -q -qq  && DEBIAN_FRONTEND=noninteractive apt install -q -qq -y git libopencv* && apt clean && rm -rf /var/lib/apt/lists/ 
+RUN pip install taichi OpenEXR coacd libigl pygltflib pyvista psutil pydantic tetgen==0.6.4 mujoco lxml scikit-image pyglet opencv-python freetype-py numba moviepy
+RUN git clone https://github.com/Genesis-Embodied-AI/Genesis.git /Genesis && cd /Genesis && pip install -e .
+
+
+# Add Extra packages
+RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq python3-vcstool && apt clean && rm -rf /var/lib/apt/lists/
+
+
+
+RUN mkdir -p /ros_home/log && chmod a+rwx /ros_home && chmod a+rwx /ros_home/log
+
+RUN echo '#!/bin/bash\n\
+set -e\n\
+source /irsl_entryrc\n\
+exec "$@"\n' >> /irsl_entrypoint.sh
+
+RUN chmod a+x /irsl_entrypoint.sh
+
+RUN echo '# setup ros environment\n\
+if [ -e "${DOCKER_ROS_SETUP}" ]; then\n\
+    source "${DOCKER_ROS_SETUP}"\n\
+else\n\
+    source "/opt/ros/$ROS_DISTRO/setup.bash"\n\
+fi\n\
+MY_IP=${DOCKER_ROS_IP:-$(hostname -i)}\n\
+if [ "$ROS_IP" == "" ]; then\n\
+    export ROS_IP=${MY_IP}\n\
+fi\n\
+if [ "$ROS_HOSTNAME" == "" ]; then\n\
+    export ROS_HOSTNAME=${ROS_IP}\n\
+fi\n\
+if [ "${DOCKER_ROS_MASTER_URI}" != "" ]; then\n\
+    export ROS_MASTER_URI=${DOCKER_ROS_MASTER_URI}\n\
+fi\n\
+if [ -n "${_EXTRA_PATH}" ]; then\n\
+    export PATH=$PATH:${_EXTRA_PATH}\n\
+fi\n\
+export HOME=/ros_home\n\
+export ROS_HOME=/ros_home\n' >>  /irsl_entryrc
+
+ENTRYPOINT ["/irsl_entrypoint.sh"]

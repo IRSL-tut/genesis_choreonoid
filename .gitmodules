@@ -1,0 +1,6 @@
+[submodule ".irsl_docker_irsl_system"]
+	path = .irsl_docker_irsl_system
+	url = https://github.com/IRSL-tut/irsl_docker_irsl_system.git
+[submodule ".irsl_docker_base"]
+	path = .irsl_docker_base
+	url = https://github.com/IRSL-tut/irsl_docker_base.git
