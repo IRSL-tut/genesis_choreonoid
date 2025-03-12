@@ -27,7 +27,7 @@ RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url h
 
 # install genesis
 RUN apt update -q -qq  && DEBIAN_FRONTEND=noninteractive apt install -q -qq -y git libopencv* && apt clean && rm -rf /var/lib/apt/lists/ 
-RUN pip install taichi OpenEXR coacd libigl pygltflib pyvista psutil pydantic tetgen==0.6.4 mujoco lxml scikit-image pyglet opencv-python freetype-py numba moviepy
+RUN pip install taichi OpenEXR coacd libigl pygltflib pyvista psutil pydantic tetgen==0.6.4 mujoco lxml scikit-image pyglet opencv-python freetype-py numba moviepy pycollada
 RUN git clone https://github.com/Genesis-Embodied-AI/Genesis.git /Genesis && cd /Genesis && pip install -e .
 
 
