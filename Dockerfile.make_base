@@ -42,6 +42,10 @@ RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq py
 
 RUN wget https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl && pip install ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl && rm ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl
 
+RUN git clone https://github.com/leggedrobotics/rsl_rl /rsl_rl && \
+    cd /rsl_rl && git checkout v1.0.2 && pip install -e .
+RUN pip install tensorboard
+
 # Configure ROS One apt repository
 RUN apt update -q -qq && apt install -y -q -qq lsb-release && apt clean && rm -rf /var/lib/apt/lists/
 RUN curl -sSL https://ros.packages.techfak.net/gpg.key -o /etc/apt/keyrings/ros-one-keyring.gpg
