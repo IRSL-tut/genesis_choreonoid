@@ -7,6 +7,10 @@ CUR_UBUNTU="22.04"
 
 DOCKER_OPT='--progress plain'
 
+if [ -n ${NO_CACHE} ]; then
+    DOCKER_OPT="--no-cache ${DOCKER_OPT}"
+fi
+
 _REPO=${REPO:-repo.irsl.eiiris.tut.ac.jp/}
 XEUS_IMG=${_REPO}xeus:${CUR_UBUNTU}
 
@@ -19,7 +23,7 @@ set -x
 
 echo "Build Image: ${TARGET_IMG}"
 
-docker build . --progress=plain -f Dockerfile.make_base  \
+docker build . ${DOCKER_OPT} -f Dockerfile.make_base  \
        -t build_temp/build_system:0
 
 # -e がirsl_entrypoint.shやirsl_enryrc に残るのでmake_baseにコピペで対処
