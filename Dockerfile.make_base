@@ -36,7 +36,7 @@ build-essential \
 && rm -rf /var/lib/apt/lists/*
 # genesisのインストール
 RUN pip install --no-cache-dir open3d
-RUN git clone https://github.com/Genesis-Embodied-AI/Genesis.git /Genesis && cd /Genesis && pip install -e .
+RUN git clone https://github.com/Genesis-Embodied-AI/Genesis.git /Genesis && cd /Genesis && git checkout -b 59579d3e7037a5b5001292a4252a78ddff8e3cc2 && pip install -e .
 RUN pip install --no-cache-dir PyOpenGL==3.1.5
 RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq python3-tk && apt clean && rm -rf /var/lib/apt/lists/
 
