@@ -7,7 +7,7 @@ RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq cu
 # 最新版pipのインストール
 RUN curl -kL https://bootstrap.pypa.io/get-pip.py | python3
 # 特定のライブラリがバージョンを先にバージョン指定をしてインストールしないとgenesis etc.が動かないので先にインストール
-RUN pip install numpy==1.26.4 scipy==1.15.1 matplotlib==3.5.1
+RUN pip install numpy==1.26.4 scipy==1.15.1 matplotlib==3.5.1 tetgen==0.6.4
 # pytorchのインストール
 RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
 # genesisインストールに必要なパッケージのインストール
