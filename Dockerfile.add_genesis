@@ -1,9 +1,6 @@
 ARG BASE_IMAGE=nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
 FROM ${BASE_IMAGE}
 
-#ENV LD_LIBRARY_PATH=/choreonoid_ws/install/lib:/opt/ros/one/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/opt/xeus/lib
-
-
 RUN cd / \
     && git clone --recursive  https://github.com/cnr-isti-vclab/PyMeshLab.git -b v2023.12.post3 \
     && cd PyMeshLab/scripts/Linux/ \
@@ -17,7 +14,9 @@ RUN cd / \
 ENV LD_LIBRARY_PATH=/PyMeshLab/pymeshlab/lib:${LD_LIBRARY_PATH}
 
 # 特定のライブラリがバージョンを先にバージョン指定をしてインストールしないとgenesis etc.が動かないので先にインストール
-RUN pip install numpy==1.26.4 scipy==1.15.1 matplotlib==3.5.1 tetgen==0.6.4
+# -> 動くことを確認したので削除
+# RUN pip install numpy==1.26.4 scipy==1.15.1 matplotlib==3.5.1 tetgen==0.6.4
+
 # pytorchのインストール
 RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
 # genesisインストールに必要なパッケージのインストール
