@@ -1,0 +1,57 @@
+ARG BASE_IMAGE=nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+FROM ${BASE_IMAGE}
+
+#ENV LD_LIBRARY_PATH=/choreonoid_ws/install/lib:/opt/ros/one/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/opt/xeus/lib
+
+
+RUN cd / \
+    && git clone --recursive  https://github.com/cnr-isti-vclab/PyMeshLab.git -b v2023.12.post3 \
+    && cd PyMeshLab/scripts/Linux/ \
+    && apt update && apt install -y mesa-common-dev libglu1-mesa-dev make ninja-build patchelf libgmp-dev libmpfr-dev libxerces-c-dev libtbb-dev libxkbcommon-x11-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev libxcb-render-util0-dev libxcb-xinerama0-dev  \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*  \
+    && bash 1_build.sh  \
+    && cd /PyMeshLab \
+    && pip install -e .
+
+ENV LD_LIBRARY_PATH=/PyMeshLab/pymeshlab/lib:${LD_LIBRARY_PATH}
+
+# 特定のライブラリがバージョンを先にバージョン指定をしてインストールしないとgenesis etc.が動かないので先にインストール
+RUN pip install numpy==1.26.4 scipy==1.15.1 matplotlib==3.5.1 tetgen==0.6.4
+# pytorchのインストール
+RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+# genesisインストールに必要なパッケージのインストール
+RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq --no-install-recommends \
+tmux \
+git \
+curl \
+wget \
+bash-completion \
+libgl1 \
+libgl1-mesa-glx \
+libegl-dev \
+libegl1 \
+libxrender1 \
+libglib2.0-0 \
+ffmpeg \
+libgtk2.0-dev \
+pkg-config \
+libvulkan-dev \
+libgles2 \
+libglvnd0 \
+libglx0 \
+libopencv* \
+build-essential \
+&& apt clean \
+&& rm -rf /var/lib/apt/lists/*
+# genesisのインストール
+RUN pip install --no-cache-dir open3d
+RUN git clone https://github.com/Genesis-Embodied-AI/Genesis.git /Genesis && cd /Genesis && pip install -e .
+RUN pip install --no-cache-dir PyOpenGL==3.1.5
+RUN apt update -q -qq && DEBIAN_FRONTEND=noninteractive apt install -y -q -qq python3-tk && apt clean && rm -rf /var/lib/apt/lists/
+
+RUN wget https://github.com/ompl/ompl/releases/download/prerelease/ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl && pip install ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl && rm ompl-1.6.0-cp310-cp310-manylinux_2_28_x86_64.whl
+
+RUN git clone https://github.com/leggedrobotics/rsl_rl /rsl_rl && \
+    cd /rsl_rl && git checkout v1.0.2 && pip install -e .
+RUN pip install tensorboard
