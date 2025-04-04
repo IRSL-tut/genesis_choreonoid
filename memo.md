@@ -41,6 +41,31 @@ docker tag repo.irsl.eiiris.tut.ac.jp/masuzawa_hiroaki_genesis_choreonoid:latest
     ```
     python3 kawada_eval.py
     ```
+## CHIDORIで学習
+1. (初回のみ) パッケージクローン
+    ```
+    cd genesis_choreonoid/userdir/humanoid_research_k/rl_test
+    git clone https://github.com/IRSL-tut/chidori_description
+    cp conv_urdf.py chidori_description/urdf/.
+    ```
+1. dockerの起動
+    ```
+    ./run.sh
+    ```
+1. (初回のみ)URDFの変換
+    ```
+    cd humanoid_research_k/rl_test/chidori_description/urdf
+    python3 conv_urdf.py
+    cd /userdir
+    ```
+1. 学習コード実行
+    ```
+    python3 chidori_train.py
+    ```
+1. 学習結果で歩行
+    ```
+    python3 chidori_eval.py
+    ```
 
 
 
