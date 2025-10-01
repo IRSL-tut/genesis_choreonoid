@@ -1,0 +1,32 @@
+ARG BASE_IMAGE=nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+FROM ${BASE_IMAGE}
+
+### HOT FIX for the error below (case A)
+#  File "/usr/local/lib/python3.10/dist-packages/_distutils_hack/__init__.py", line 76, in ensure_local_distutils
+#    assert '_distutils' in core.__file__, core.__file__
+#AssertionError: /usr/lib/python3.10/distutils/core.py
+#[Genesis] [09:49:16] [ERROR] AssertionError: /usr/lib/python3.10/distutils/core.py
+ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+
+#
+RUN pip install --upgrade pip setuptools
+
+# pytorchのインストール
+RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+
+# genesisインストールに必要なパッケージのインストール
+RUN pip install genesis-world
+
+# OMPL ???
+RUN pip install ompl
+
+RUN pip install rsl-rl-lib==2.2.4
+
+RUN pip install py-cpuinfo z3-solver usd-core tensorboard
+
+### HOT FIX for the error below (case B)
+#  File "/usr/local/lib/python3.10/dist-packages/_distutils_hack/__init__.py", line 76, in ensure_local_distutils
+#    assert '_distutils' in core.__file__, core.__file__
+#AssertionError: /usr/lib/python3.10/distutils/core.py
+#[Genesis] [09:49:16] [ERROR] AssertionError: /usr/lib/python3.10/distutils/core.py
+#RUN pip install setuptools==59.8.0 || echo 'OK'
