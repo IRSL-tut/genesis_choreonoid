@@ -19,8 +19,12 @@ OUTPUT_IMAGE_NAME=${REPO}genesis_with_irsl${IRSL_TAG}:cuda_${BASEIMAGE_TAG}_${RO
 DOCKER_OPT='--progress plain'
 
 # make irsl_system with cuda
-docker pull ${IRSL_SYSTEM_IMAGE_NAME}
 FIND_IMAGE=$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep ${IRSL_SYSTEM_IMAGE_NAME})
+if [ -n "${BUILD_SYSTEM}" ]; then
+    FIND_IMAGE=
+else
+    docker pull ${IRSL_SYSTEM_IMAGE_NAME}
+fi
 if [ -z "${FIND_IMAGE}" ]; then
     cd .irsl_docker_irsl_system/
     INPUT_IMAGE=${IRSL_BASE_IMAGE_NAME} BUILD_ROS=${ROS_DISTRO} BUILD_UBUNTU=${UBUNTU_VER} ./build.sh ${IRSL_SYSTEM_IMAGE_NAME}
