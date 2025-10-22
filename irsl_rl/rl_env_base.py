@@ -93,6 +93,7 @@ class RLEnvBase:
 
 
     def step(self, actions):
+        self.exact_actions = torch.tensor(actions, device=self.device, dtype=torch.float32) ## copy
         self.actions = torch.clip(actions, -self.env_cfg["clip_actions"], self.env_cfg["clip_actions"])
         exec_actions = self.last_actions if self.simulate_action_latency else self.actions
         self.target_dof_pos = exec_actions * self.env_cfg["action_scale"] + self.default_dof_pos
@@ -243,10 +244,6 @@ class RLEnvBase:
         #return torch.sum(torch.abs(self.dof_force), dim=1)
         return torch.sum(torch.square(self.dof_force), dim=1)
 
-    def _reward_tracking_error(self):
-        # Penalize tracking error
-        return torch.sum(torch.square(self.target_dof_pos - self.dof_pos), dim=1)
-
     def _reward_base_rotation_P(self):
         # Penalize base rotation
         return torch.abs(self.base_euler[:, 1])
@@ -254,6 +251,15 @@ class RLEnvBase:
     def _reward_base_rotation_R(self):
         # Penalize base rotation
         return torch.abs(self.base_euler[:, 0])
+
+    def _reward_episode_len(self):
+        return torch.ones((self.num_envs,), dtype=torch.float32)
+
+    def _reward_correct_action(self):
+        return 1 / (1 + torch.sum(torch.square(self.exact_actions - self.actions), dim=1))
+
+    def _reward_joint_position_error(self):
+        return 1 / (1 + torch.sum(torch.abs(self.target_dof_pos - self.dof_pos), dim=1))
 
     #def _reward_min_ankle_height(self):
     #    # ankle height
