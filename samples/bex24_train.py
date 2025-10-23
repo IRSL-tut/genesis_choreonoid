@@ -100,23 +100,23 @@ def get_cfgs():
         #"kp": 20.0,
         #"kd": 0.2,
         #"clip_actions": 8.0,
-        "kp": 80.0,
-        "kd": 0.4,
-        "clip_actions": 6.0,
+        #"kp": 80.0,
+        #"kd": 0.4,
+        #"clip_actions": 6.0,
         #"kp": 160.0,
         #"kd": 0.6,
         #"clip_actions": 5.0,
         #"kp": 320.0,
         #"kd": 0.8,
         #"clip_actions": 4.0,
-        #"kp": 1280.0,
-        #"kd": 1.6,
-        #"clip_actions": 3.0,
+        "kp": 1280.0,
+        "kd": 1.6,
+        "clip_actions": 3.0,
         #termination
         "termination_if_roll_greater_than":  45,  # degree
         "termination_if_pitch_greater_than": 45,
         # base pose
-        "base_init_pos": [0.0, 0.0, 0.515],
+        "base_init_pos": [0.0, 0.0, 0.505],
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
         "episode_length_s": 20.0,
         "resampling_time_s": 4.0,
@@ -142,13 +142,16 @@ def get_cfgs():
         "reward_scales": {
             "tracking_lin_vel": 1.0, # 1.0
             "tracking_ang_vel": 0.2,
-            "lin_vel_z": -1.0,
+            # "lin_vel_z": -1.0,
             "base_height": -20.0,  # -50.0
             "action_rate": -0.005, # -0.005
-            "similar_to_default": -0.1, #-0.1
+            "similar_to_default": -0.5, #-0.1
             "base_rotation_P": -0.1,  # ? ## add by IRSL
             "base_rotation_R": -0.05, # ? ## add by IRSL
-            "effort": -5*1e-6, # ## add by IRSL
+            "effort": -2*1e-6, # ## add by IRSL
+            # "episode_len": 1.0, # ## add by IRSL
+            "correct_action": 2.0, # ## add by IRSL
+            "joint_position_error": 4.0, # ## add by IRSL
         },
     }
     command_cfg = {
