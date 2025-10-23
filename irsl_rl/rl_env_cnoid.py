@@ -33,6 +33,18 @@ class RLEnvChoreonoid(RLEnvBase):
 
         self.srobot.setAngleMap( self.env_cfg["default_joint_angles"] )
 
+        ### check joint names
+        self.setAnglesToCnoid = None
+        self.setAnglesToGs = None
+        jcnoid = self.srobot.jointNames
+        jgs = self.env_cfg["joint_names"]
+        for a, b in zip(jcnoid, jgs):
+            if a != b:
+                ## self.env_cfg["joint_names"] -> self.srobot.jointNames
+                self.setAnglesoToCnoid = [ jcnoid.index(n) for n in jgs ]
+                ## self.srobot.jointNames -> self.env_cfg["joint_names"]
+                self.setAnglesoToGs = [ jgs.index(n) for n in jcnoid ]
+                break
         cds = coordinates(self.base_init_pos.cpu().numpy())
         cds.quaternion_wxyz = self.base_init_quat.cpu().numpy()
         self.srobot.rootCoords( cds )
@@ -47,9 +59,20 @@ class RLEnvChoreonoid(RLEnvBase):
                        )
         self.init_cds = self.sim.sbody.rootLink.getCoords()
 
+    def convAnglesToCnoid(self, av):
+        if self.setAnglesToCnoid is None:
+            return av
+        return np.array( [ av[i] for i in self.setAnglesToCnoid ] )
+
+    def convAnglesToGenesis(self, av):
+        if self.setAnglesToGs is None:
+            return av
+        return np.array( [ av[i] for i in self.setAnglesToGs ] )
+
     def env_step(self): ## override
-        #self.sim.sequencer.setNoInterpolation([ self.target_dof_pos[0].cpu().numpy() ], 1)
-        self.sim.sequencer.setNoInterpolation([ self.target_dof_pos[0].cpu().numpy() ], self.substeps)
+        tgt = self.convAnglesToCnoid( self.target_dof_pos[0].cpu().numpy() )
+        #self.sim.sequencer.setNoInterpolation([ tgt ], 1)
+        self.sim.sequencer.setNoInterpolation([ tgt ], self.substeps)
         self.sim.runCount(self.substeps)
 
     def update_buffers(self): ## override
@@ -80,10 +103,12 @@ class RLEnvChoreonoid(RLEnvBase):
         # base_quat_gs = np.array([[base_quat[3] , base_quat[0], base_quat[1], base_quat[2]]])
         # inv_base_quat = torch.tensor(inv_quat(base_quat_gs)).to(gs.tc_float).to(device)
         self.projected_gravity[0] = torch.tensor(base_coords.inverse_rotate_vector(np.array([0,0,-1])), device=self.device)
+
         # self.dof_pos[:] = self.robot.get_dofs_position(self.motors_dof_idx)
-        self.dof_pos = torch.tensor([sbody.angleVector()]).to(torch.float32).to(self.device)
+        self.dof_pos = torch.tensor([self.convAnglesToGenesis(sbody.angleVector())]).to(torch.float32).to(self.device)
+
         # self.dof_vel[:] = self.robot.get_dofs_velocity(self.motors_dof_idx)
-        self.dof_vel = torch.tensor([sbody.getVelocities()]).to(torch.float32).to(self.device)
+        self.dof_vel = torch.tensor([self.convAnglesToGenesis(sbody.getVelocities())]).to(torch.float32).to(self.device)
         # self.dof_force[:] = self.robot.get_dofs_force(self.motors_dof_idx)
         # self.dof_force = ...
         # self.l_ankle_z[:] = self.robot.get_link(name="L_ANKLE_R").get_pos()[:,2]
