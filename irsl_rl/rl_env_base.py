@@ -1,6 +1,8 @@
 import torch
 import math
 
+from tensordict import TensorDict
+
 def rand_float(lower, upper, shape, device):
     return (upper - lower) * torch.rand(size=shape, device=device) + lower
 
@@ -144,13 +146,13 @@ class RLEnvBase:
         self.last_dof_vel[:] = self.dof_vel[:]
         self.last_dof_force[:] = self.dof_force[:]
 
-        self.extras["observations"]["critic"] = self.obs_buf
+        self.extras["observations"]["critic"] = self.obs_buf ## to be fixed
 
-        return self.obs_buf, self.rew_buf, self.reset_buf, self.extras
+        return TensorDict({"policy": self.obs_buf}, device=self.device), self.rew_buf, self.reset_buf, self.extras
 
     def get_observations(self):
-        self.extras["observations"]["critic"] = self.obs_buf
-        return self.obs_buf, self.extras
+        self.extras["observations"]["critic"] = self.obs_buf ## to be fixed
+        return TensorDict({"policy": self.obs_buf}, device=self.device)
 
     def get_privileged_observations(self):
         ###
