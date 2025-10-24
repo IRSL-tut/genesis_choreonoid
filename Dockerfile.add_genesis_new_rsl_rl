@@ -1,0 +1,58 @@
+ARG BASE_IMAGE=nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+FROM ${BASE_IMAGE}
+
+### HOT FIX for the error below (case A)
+#  File "/usr/local/lib/python3.10/dist-packages/_distutils_hack/__init__.py", line 76, in ensure_local_distutils
+#    assert '_distutils' in core.__file__, core.__file__
+#AssertionError: /usr/lib/python3.10/distutils/core.py
+#[Genesis] [09:49:16] [ERROR] AssertionError: /usr/lib/python3.10/distutils/core.py
+#ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+
+# RUN pip install --break-system-packages --upgrade pip setuptools
+RUN pip install --break-system-packages --upgrade setuptools
+
+# pytorchのインストール => merged to lines below
+# RUN pip install --break-system-packages torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+
+# genesisインストールに必要なパッケージのインストール
+RUN pip install --break-system-packages genesis-world rsl-rl-lib==3.1.1 'torch<2.7' torchvision torchaudio
+
+# OMPL ???
+RUN pip install --break-system-packages ompl
+
+RUN pip install --break-system-packages py-cpuinfo z3-solver usd-core tensorboard
+
+### HOT FIX for the error below (case B)
+#  File "/usr/local/lib/python3.10/dist-packages/_distutils_hack/__init__.py", line 76, in ensure_local_distutils
+#    assert '_distutils' in core.__file__, core.__file__
+#AssertionError: /usr/lib/python3.10/distutils/core.py
+#[Genesis] [09:49:16] [ERROR] AssertionError: /usr/lib/python3.10/distutils/core.py
+#RUN pip install setuptools==59.8.0 || echo 'OK'
+
+RUN <<EOF
+dir=$(cat - << _DOC_ | python3 -
+import sys
+for s in sys.path:
+  if '/usr/local/lib' in s:
+    print(s)
+    break
+_DOC_
+)
+cd $dir
+cat - << _DOC_ | patch -p1
+--- a/genesis/utils/misc.py
++++ b/genesis/utils/misc.py
+@@ -63,6 +63,9 @@ class redirect_libc_stderr:
+     # Enter: duplicate stderr → tmp, dup2(target) → stderr
+     # --------------------------------------------------
+     def __enter__(self):
++        if not hasattr(sys.stderr, 'fileno'):
++            self.stderr_fileno = None
++            return self
+         self.stderr_fileno = sys.stderr.fileno()
+         self.original_stderr_fileno = os.dup(self.stderr_fileno)
+         sys.stderr.flush()
+_DOC_
+EOF
+
+###
