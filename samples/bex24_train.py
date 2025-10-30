@@ -2,17 +2,11 @@ import argparse
 import os
 import pickle
 import shutil
-from importlib import metadata
 
-try:
-    try:
-        if metadata.version("rsl-rl"):
-            raise ImportError
-    except metadata.PackageNotFoundError:
-        if metadata.version("rsl-rl-lib") != "2.2.4":
-            raise ImportError
-except (metadata.PackageNotFoundError, ImportError) as e:
-    raise ImportError("Please uninstall 'rsl_rl' and install 'rsl-rl-lib==2.2.4'.") from e
+from importlib import metadata
+ver_rsl_rl = metadata.version("rsl-rl-lib")
+print(f"Version of rsl-rl-lib : {ver_rsl_rl}")
+
 from rsl_rl.runners import OnPolicyRunner
 
 import genesis as gs
@@ -21,47 +15,59 @@ from bex24_env_gs import Bex24Env as RL_Env
 
 def get_train_cfg(exp_name, max_iterations):
     train_cfg_dict = {
+        ## runner
+        "class_name": "OnPolicyRunner",
+        # -- general
+        "num_steps_per_env": 24,
+        "max_iterations": max_iterations,
+        "seed": 1,
+        # -- observations
+        # "obs_groups": {"policy": ["policy"], "critic": ["policy", "privileged"]} # maps observation groups to types. See `vec_env.py` for more information
+        "obs_groups": {"policy": ["policy"], "critic": ["policy"]}, # maps observation groups to types. See `vec_env.py` for more information
+        # -- logging parameters
+        "save_interval": 100,
+        "experiment_name": exp_name,
+        "run_name": "",
+        # -- logging writer
+        "logger": "tensorboard",  # tensorboard, neptune, wandb #not in v2.2.4
+        "neptune_project": "legged_gym", #not in v2.2.4
+        "wandb_project":   "legged_gym", #not in v2.2.4
+        ##
+        "empirical_normalization": None,
+        ###
         "algorithm": {
             "class_name": "PPO",
+            # -- training
+            "learning_rate": 0.001,
+            "num_learning_epochs": 5,
+            "num_mini_batches": 4,
+            "schedule": "adaptive",
+            # -- value function
+            "value_loss_coef": 1.0,
             "clip_param": 0.2,
+            "use_clipped_value_loss": True,
+            # -- surrogate loss
             "desired_kl": 0.01,
             "entropy_coef": 0.01,
             "gamma": 0.99,
             "lam": 0.95,
-            "learning_rate": 0.001,
             "max_grad_norm": 1.0,
-            "num_learning_epochs": 5,
-            "num_mini_batches": 4,
-            "schedule": "adaptive",
-            "use_clipped_value_loss": True,
-            "value_loss_coef": 1.0,
+            # -- miscellaneous
+            "normalize_advantage_per_mini_batch": False, #not in v2.2.4
         },
         "init_member_classes": {},
+        ###
         "policy": {
+            "class_name": "ActorCritic",
             "activation": "elu",
+            "actor_obs_normalization": False, #not in v2.2.4
+            "critic_obs_normalization": False, #not in v2.2.4
             "actor_hidden_dims": [512, 256, 128],
             "critic_hidden_dims": [512, 256, 128],
             "init_noise_std": 1.0,
-            "class_name": "ActorCritic",
+            "noise_std_type": "scalar", # 'scalar' or 'log' #not in v2.2.4
         },
-        "runner": {
-            "checkpoint": -1,
-            "experiment_name": exp_name,
-            "load_run": -1,
-            "log_interval": 1,
-            "max_iterations": max_iterations,
-            "record_interval": -1,
-            "resume": False,
-            "resume_path": None,
-            "run_name": "",
-        },
-        "runner_class_name": "OnPolicyRunner",
-        "num_steps_per_env": 24,
-        "save_interval": 100,
-        "empirical_normalization": None,
-        "seed": 1,
     }
-
     return train_cfg_dict
 
 
@@ -111,19 +117,22 @@ def get_cfgs():
         #"clip_actions": 4.0,
         "kp": 1280.0,
         "kd": 1.6,
-        "clip_actions": 3.0,
+        "clip_actions": 2.0,
         #termination
         "termination_if_roll_greater_than":  45,  # degree
         "termination_if_pitch_greater_than": 45,
         # base pose
-        "base_init_pos": [0.0, 0.0, 0.505],
+        "base_init_pos": [0.0, 0.0, 0.515],
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
+        "base_z_noise": [-0.001, 0.001], #
+        "base_pitch_noise": [-0.5/180*3.14, 0.5/180*3.14], #
+        "base_roll_noise": [-0.5/180*3.14, 0.5/180*3.14], #
         "episode_length_s": 20.0,
         "resampling_time_s": 4.0,
         "action_scale": 1.0,
         "simulate_action_latency": True,
         "dt": 0.01,    ## add by IRSL
-        "substeps": 5, ## add by IRSL
+        "substeps": 10, ## add by IRSL
         "rotorInertia": 0.1, ## add by IRSL
     }
     obs_cfg = {
@@ -140,18 +149,19 @@ def get_cfgs():
         "base_height_target": 0.4944,
         "feet_height_target": 0.075,
         "reward_scales": {
-            "tracking_lin_vel": 1.0, # 1.0
+            "tracking_lin_vel": 4.0, # 1.0
             "tracking_ang_vel": 0.2,
             # "lin_vel_z": -1.0,
-            "base_height": -20.0,  # -50.0
-            "action_rate": -0.005, # -0.005
-            "similar_to_default": -0.5, #-0.1
+            "base_height": -50.0,  # -50.0
+            "action_rate": -0.001, # -0.005
+            "similar_to_default": -0.4, #-0.1
             "base_rotation_P": -0.1,  # ? ## add by IRSL
             "base_rotation_R": -0.05, # ? ## add by IRSL
-            "effort": -2*1e-6, # ## add by IRSL
+            # "effort": -2*1e-6, # ## add by IRSL
             # "episode_len": 1.0, # ## add by IRSL
-            "correct_action": 2.0, # ## add by IRSL
-            "joint_position_error": 4.0, # ## add by IRSL
+            "correct_action": 4.0, # ## add by IRSL
+            #"joint_position_error": 2.0, # ## add by IRSL
+            "plus_watt": 400.0, # ## add by IRSL
         },
     }
     command_cfg = {
