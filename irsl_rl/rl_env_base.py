@@ -97,7 +97,8 @@ class RLEnvBase:
         #self.min_ankle_height = torch.zeros((self.num_envs), device=self.device, dtype=torch.float32)
         self.extras = dict()  # extra information for logging
         self.extras["observations"] = dict()
-
+        ##
+        self.reset()
 
     def _resample_commands(self, envs_idx):
         self.commands[envs_idx, 0] = rand_float(*self.command_cfg["lin_vel_x_range"], (len(envs_idx),), self.device)
