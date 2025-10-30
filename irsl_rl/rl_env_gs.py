@@ -88,6 +88,7 @@ class RLEnvGenesis(RLEnvBase):
         # self.r_ankle_z[:] = self.robot.get_link(name="R_ANKLE_R").get_pos()[:,2]
         # self.min_ankle_height[:], _ = torch.min(torch.stack([self.l_ankle_z,self.r_ankle_z]), dim=0)
 
+
     def reset_env_idx(self, envs_idx): ## override
         self.robot.set_dofs_position(
             position = self.dof_pos[envs_idx],
@@ -96,7 +97,7 @@ class RLEnvGenesis(RLEnvBase):
             envs_idx = envs_idx,
         )
 
-        self.robot.set_pos (self.base_pos[envs_idx],  zero_velocity=False, envs_idx=envs_idx)
-        self.robot.set_quat(self.base_quat[envs_idx], zero_velocity=False, envs_idx=envs_idx)
+        self.robot.set_pos (self.use_base_pos[envs_idx],  zero_velocity=False, envs_idx=envs_idx)
+        self.robot.set_quat(self.use_base_quat[envs_idx], zero_velocity=False, envs_idx=envs_idx)
 
         self.robot.zero_all_dofs_velocity(envs_idx)
