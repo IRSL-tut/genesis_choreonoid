@@ -1,6 +1,8 @@
 import torch
 import math
 
+from genesis.utils.geom import transform_quat_by_quat, xyz_to_quat
+
 from tensordict import TensorDict
 
 def rand_float(lower, upper, shape, device):
@@ -33,6 +35,13 @@ class RLEnvBase:
 
         self.base_init_pos = torch.tensor(self.env_cfg["base_init_pos"], device=self.device)
         self.base_init_quat = torch.tensor(self.env_cfg["base_init_quat"], device=self.device)
+        ###
+        self.base_z_range_min = self.env_cfg['base_z_noise'][0] if 'base_z_noise' in self.env_cfg else 0.0
+        self.base_z_range_max = self.env_cfg['base_z_noise'][1] if 'base_z_noise' in self.env_cfg else 0.0
+        self.base_pitch_range_min = self.env_cfg['base_pitch_noise'][0] if 'base_pitch_noise' in self.env_cfg else 0.0
+        self.base_pitch_range_max = self.env_cfg['base_pitch_noise'][1] if 'base_pitch_noise' in self.env_cfg else 0.0
+        self.base_roll_range_min = self.env_cfg['base_roll_noise'][0] if 'base_roll_noise' in self.env_cfg else 0.0
+        self.base_roll_range_max = self.env_cfg['base_roll_noise'][1] if 'base_roll_noise' in self.env_cfg else 0.0
 
         # self.inv_base_init_quat = inv_quat(self.base_init_quat)
         # w成分を-1倍して逆クオータニオンを作成
@@ -76,6 +85,8 @@ class RLEnvBase:
         self.target_dof_pos = torch.zeros_like(self.actions)
         self.base_pos = torch.zeros((self.num_envs, 3), device=self.device, dtype=torch.float32)
         self.base_quat = torch.zeros((self.num_envs, 4), device=self.device, dtype=torch.float32)
+        self.use_base_pos = torch.zeros((self.num_envs, 3), device=self.device, dtype=torch.float32) ##
+        self.use_base_quat = torch.zeros((self.num_envs, 4), device=self.device, dtype=torch.float32) ##
         self.default_dof_pos = torch.tensor(
             [self.env_cfg["default_joint_angles"][name] for name in self.env_cfg["joint_names"]],
             device=self.device,
@@ -165,8 +176,16 @@ class RLEnvBase:
         self.dof_force[envs_idx] = 0.0
 
         # reset base
-        self.base_pos[envs_idx] = self.base_init_pos
+        self.base_pos[envs_idx]  = self.base_init_pos
         self.base_quat[envs_idx] = self.base_init_quat.reshape(1, -1)
+
+        ### randomize
+        sz = len(envs_idx)
+        self.use_base_pos[envs_idx, 2] = self.base_pos[envs_idx, 2] + rand_float(self.base_z_range_min, self.base_z_range_max, (sz,), self.device)
+        buf_xyz = torch.zeros((sz, 3), device=self.device, dtype=torch.float32)
+        buf_xyz[:, 0] = rand_float(self.base_roll_range_min,  self.base_roll_range_max,  (sz,), self.device) ## deg
+        buf_xyz[:, 1] = rand_float(self.base_pitch_range_min, self.base_pitch_range_max, (sz,), self.device) ## deg
+        self.use_base_quat[envs_idx] = transform_quat_by_quat(self.base_quat[envs_idx], xyz_to_quat(buf_xyz))
 
         self.base_lin_vel[envs_idx] = 0
         self.base_ang_vel[envs_idx] = 0
