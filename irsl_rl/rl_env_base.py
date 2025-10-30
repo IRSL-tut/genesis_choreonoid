@@ -48,7 +48,7 @@ class RLEnvBase:
         self.inv_base_init_quat = self.base_init_quat.clone()
         self.inv_base_init_quat[0] *= -1.0
 
-        #### call
+        #### call overrided function
         self.scene_build(substeps, robot_urdf_path, show_viewer)
 
         # prepare reward functions and multiply reward scales by dt
@@ -112,8 +112,8 @@ class RLEnvBase:
         exec_actions = self.last_actions if self.simulate_action_latency else self.actions
         self.target_dof_pos = exec_actions * self.env_cfg["action_scale"] + self.default_dof_pos
 
-        self.env_step()
-        self.update_buffers()
+        self.env_step() ## call overrided function
+        self.update_buffers() ## call overrided function
 
         # resample commands
         envs_idx = (
@@ -209,9 +209,9 @@ class RLEnvBase:
     def reset_idx(self, envs_idx):
         if len(envs_idx) == 0:
             return
-
+        ###
         self.reset_buffers_idx(envs_idx)
-        self.reset_env_idx(envs_idx)
+        self.reset_env_idx(envs_idx) ## call overrided function
         self._resample_commands(envs_idx)
 
     def reset(self):
