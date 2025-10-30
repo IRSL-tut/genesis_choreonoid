@@ -2,17 +2,11 @@ import argparse
 import os
 import pickle
 import shutil
-from importlib import metadata
 
-try:
-    try:
-        if metadata.version("rsl-rl"):
-            raise ImportError
-    except metadata.PackageNotFoundError:
-        if metadata.version("rsl-rl-lib") != "3.1.1":
-            raise ImportError
-except (metadata.PackageNotFoundError, ImportError) as e:
-    raise ImportError("Please uninstall 'rsl_rl' and install 'rsl-rl-lib==3.1.1'.") from e
+from importlib import metadata
+ver_rsl_rl = metadata.version("rsl-rl-lib")
+print(f"Version of rsl-rl-lib : {ver_rsl_rl}")
+
 from rsl_rl.runners import OnPolicyRunner
 
 import genesis as gs
@@ -128,8 +122,11 @@ def get_cfgs():
         "termination_if_roll_greater_than":  45,  # degree
         "termination_if_pitch_greater_than": 45,
         # base pose
-        "base_init_pos": [0.0, 0.0, 0.505],
+        "base_init_pos": [0.0, 0.0, 0.515],
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
+        "base_z_noise": [-0.001, 0.001], #
+        "base_pitch_noise": [-0.5/180*3.14, 0.5/180*3.14], #
+        "base_roll_noise": [-0.5/180*3.14, 0.5/180*3.14], #
         "episode_length_s": 20.0,
         "resampling_time_s": 4.0,
         "action_scale": 1.0,
@@ -152,18 +149,19 @@ def get_cfgs():
         "base_height_target": 0.4944,
         "feet_height_target": 0.075,
         "reward_scales": {
-            "tracking_lin_vel": 1.0, # 1.0
+            "tracking_lin_vel": 4.0, # 1.0
             "tracking_ang_vel": 0.2,
             # "lin_vel_z": -1.0,
-            "base_height": -20.0,  # -50.0
+            "base_height": -50.0,  # -50.0
             "action_rate": -0.001, # -0.005
             "similar_to_default": -0.4, #-0.1
             "base_rotation_P": -0.1,  # ? ## add by IRSL
             "base_rotation_R": -0.05, # ? ## add by IRSL
-            "effort": -2*1e-6, # ## add by IRSL
+            # "effort": -2*1e-6, # ## add by IRSL
             # "episode_len": 1.0, # ## add by IRSL
-            "correct_action": 2.0, # ## add by IRSL
-            "joint_position_error": 2.0, # ## add by IRSL
+            "correct_action": 4.0, # ## add by IRSL
+            #"joint_position_error": 2.0, # ## add by IRSL
+            "plus_watt": 400.0, # ## add by IRSL
         },
     }
     command_cfg = {
