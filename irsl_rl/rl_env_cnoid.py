@@ -8,8 +8,7 @@ from irsl_choreonoid.simulation_utils import SimulationEnvironment
 
 class RLEnvChoreonoid(RLEnvBase):
     def __init__(self, num_envs, env_cfg, obs_cfg, reward_cfg, command_cfg, show_viewer=True,
-                 device="cuda", dt=0.02, substeps=2,
-                 robot_urdf_path=None, **kwargs):
+                 device="cuda", dt=0.02, substeps=2, robot_urdf_path=None, **kwargs):
 
         self.cnoid_model_class = None
         super().__init__(num_envs, env_cfg, obs_cfg, reward_cfg, command_cfg, show_viewer, device, dt, substeps, robot_urdf_path)
@@ -45,13 +44,9 @@ class RLEnvChoreonoid(RLEnvBase):
                 ## self.srobot.jointNames -> self.env_cfg["joint_names"]
                 self.setAnglesoToGs = [ jgs.index(n) for n in jcnoid ]
                 break
-        cds = coordinates(self.base_init_pos.cpu().numpy())
-        cds.quaternion_wxyz = self.base_init_quat.cpu().numpy()
-        self.srobot.rootCoords( cds )
-        self.base_euler = torch.zeros((self.num_envs, 3), device=self.device, dtype=torch.float32) ## to be fixed
-        self.srobot.item.storeInitialState()
 
     def startSim(self):
+        self.sim.stop()##
         self.sim.start(dt = self.dt/self.substeps, P = self.env_cfg["kp"], D = self.env_cfg["kd"],
                        simple = True,
                        effortRange = self.env_cfg['effortRange'] if 'effortRange' in self.env_cfg else True,
@@ -117,5 +112,16 @@ class RLEnvChoreonoid(RLEnvBase):
         # self.min_ankle_height[:], _ = torch.min(torch.stack([self.l_ankle_z,self.r_ankle_z]), dim=0)
 
     def reset_env_idx(self, envs_idx): ## override
+        self.srobot.setAngleMap( self.env_cfg["default_joint_angles"] )
+
+        # cds = coordinates(self.use_init_pos[0].cpu().numpy())
+        # cds.quaternion_wxyz = self.use_init_quat[0].cpu().numpy()
+        cds = coordinates(self.base_init_pos.cpu().numpy())
+        cds.quaternion_wxyz = self.base_init_quat.cpu().numpy()
+        self.srobot.rootCoords( cds )
+
+        self.base_euler = torch.zeros((self.num_envs, 3), device=self.device, dtype=torch.float32) ## to be fixed
+        self.srobot.item.storeInitialState()
+
         ### start-simulation
         self.startSim()
