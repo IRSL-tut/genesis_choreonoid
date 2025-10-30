@@ -191,6 +191,7 @@ class RLEnvBase:
         self.base_ang_vel[envs_idx] = 0
 
         # reset buffers
+        self.actions[envs_idx] = 0.0 ## ??
         self.last_actions[envs_idx] = 0.0
         self.last_dof_vel[envs_idx] = 0.0
         self.episode_length_buf[envs_idx] = 0
