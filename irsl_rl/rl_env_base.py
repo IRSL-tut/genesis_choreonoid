@@ -284,6 +284,9 @@ class RLEnvBase:
     def _reward_joint_position_error(self):
         return 1 / (1 + torch.sum(torch.abs(self.target_dof_pos - self.dof_pos), dim=1))
 
+    def _reward_plus_watt(self):
+        return 1 / (1 + torch.sum( torch.clamp(self.dof_force * self.dof_vel, min = 0), dim = 1 ))
+
     #def _reward_min_ankle_height(self):
     #    # ankle height
     #    return torch.square(self.min_ankle_height)
