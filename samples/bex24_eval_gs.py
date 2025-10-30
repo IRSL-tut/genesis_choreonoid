@@ -47,7 +47,8 @@ def main():
     return env, policy
 
 def eval_policy(env, policy):
-    obs, _ = env.reset()
+    ## obs, _ = env.reset()
+    obs, rews, dones, infos = env.step(env.actions)
     with torch.no_grad():
         while True:
             actions = policy(obs)
