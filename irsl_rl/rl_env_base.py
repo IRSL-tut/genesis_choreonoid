@@ -215,7 +215,8 @@ class RLEnvBase:
     def reset(self):
         self.reset_buf[:] = True
         self.reset_idx(torch.arange(self.num_envs, device=self.device))
-        return self.obs_buf, None
+        obs = self.get_observations()
+        return obs, None
 
     def zeoAction(self):
         return torch.zeros((self.num_envs, self.num_actions), device=self.device, dtype=torch.float32)
