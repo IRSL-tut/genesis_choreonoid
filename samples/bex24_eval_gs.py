@@ -3,18 +3,11 @@ import os
 import pickle
 
 from importlib import metadata
-import torch
-try:
-    try:
-        if metadata.version("rsl-rl"):
-            raise ImportError
-    except metadata.PackageNotFoundError:
-        if metadata.version("rsl-rl-lib") != "2.2.4":
-            raise ImportError
-except (metadata.PackageNotFoundError, ImportError) as e:
-    raise ImportError("Please uninstall 'rsl_rl' and install 'rsl-rl-lib==2.2.4'.") from e
-from rsl_rl.runners import OnPolicyRunner
+ver_rsl_rl = metadata.version("rsl-rl-lib")
+print(f"Version of rsl-rl-lib : {ver_rsl_rl}")
 
+import torch
+from rsl_rl.runners import OnPolicyRunner
 import genesis as gs
 
 from bex24_env_gs import Bex24Env as RLEnv
