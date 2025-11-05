@@ -2,6 +2,9 @@
 
 https://github.com/Genesis-Embodied-AI/Genesis
 
+Reference
+https://genesis-world.readthedocs.io/en/latest/api_reference/index.html
+
 ## build
 ```
 ./build.sh
